@@ -34,12 +34,10 @@ def encode_and_secure(password):
                 print(f"Error processing {img_path}: {e}")
         
         if all_encodings:
-            # We take the average encoding if multiple images were captured
-            # but for simplicity we can just store the list of encodings
-            # The requirement is "Store feature vectors"
+            
             encoded_data = pickle.dumps(all_encodings)
             
-            # Encrypt and save
+            
             security.encrypt_data(encoded_data, student_name)
             print(f"Successfully secured encodings for {student_name}")
         else:

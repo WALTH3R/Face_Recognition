@@ -1,0 +1,18 @@
+Install the libraries:
+- cv2
+- face_recognition
+- security
+- getpass
+- pickle
+- numpy
+- panda
+- cryptography
+
+
+Steps :
+
+- First we Collect the Faces by running  collect_data.py press "c" to capture faces and "q" to quit
+- Second we run encode_faces.py to extract the facial features and secure the information, we will input the password for the information
+- And finally we run main.py to test if the saved faces work, it will show a percentage 
+- The face data is saved in encodings/
+- And the history of activity is stored in logs/
