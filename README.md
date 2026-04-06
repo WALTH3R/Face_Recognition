@@ -1,0 +1,24 @@
+Install the libraries:
+- cv2
+- face_recognition
+- security
+- getpass
+- pickle
+- numpy
+- panda
+- cryptography
+
+
+Steps :
+- (Updated) type "python gui.py" in the terminal to use the features at once, the default master password is "12345"
+ it can be changed at any time by running "python encode_faces.py" in the terminal.
+- First we Collect the Faces by running  collect_data.py press "c" to capture faces and "q" to quit
+- Second we run encode_faces.py to extract the facial features and secure the information, we will input the password for the information
+- And finally we run main.py to test if the saved faces work, it will show a percentage 
+- The face data is saved in encodings/
+- And the history of activity is stored in logs/
+
+Updates :
+- New GUI using PyQt for a better experience
+- Database for better and secure storage of the data
+- Improved Encryption 
