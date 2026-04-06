@@ -9,6 +9,11 @@ Install the libraries:
 - cryptography
 
 
+Database steps :
+- First you need a Mysql database connection, using Mysql Workbench and Xampp for example
+- Second you run the sql query located in the same directory called "database_setup" you either copy paste the query or import the file in the database
+- Third you modify the connection (user,host,port,password,database name) to your database using db_connection.py
+
 Steps :
 - (Updated) type "python gui.py" in the terminal to use the features at once, the default master password is "12345"
  it can be changed at any time by running "python encode_faces.py" in the terminal.
