@@ -14,6 +14,7 @@ from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot, Qt
 from PyQt5.QtGui import QImage, QPixmap, QFont
 
 from security import SecurityManager
+from db_connection import DatabaseManager
 
 # --- Thread Workers ---
 
@@ -25,12 +26,10 @@ class CameraCollectionWorker(QThread):
         super().__init__()
         self.running = True
         self.student_name = student_name
-        self.dataset_path = f"dataset/{self.student_name}"
         self.capture_flag = False
         self.image_count = 0
-
-        if not os.path.exists(self.dataset_path):
-            os.makedirs(self.dataset_path)
+        self.db = DatabaseManager()
+        self.student_id = self.db.insert_student(self.student_name)
 
     def run(self):
         cap = cv2.VideoCapture(0)
@@ -49,9 +48,13 @@ class CameraCollectionWorker(QThread):
                         top, right, bottom, left = face_locations[0]
                         face_image = frame[top:bottom, left:right]
                         self.image_count += 1
-                        img_path = f"{self.dataset_path}/{self.image_count}.jpg"
-                        cv2.imwrite(img_path, face_image)
-                        self.status_signal.emit(f"Captured Image {self.image_count}")
+                        
+                        if self.student_id:
+                            self.db.insert_face_image(self.student_id, face_image)
+                            self.status_signal.emit(f"Captured Image {self.image_count} to MySQL")
+                        else:
+                            self.status_signal.emit("Error: Student ID not generated. DB fail.")
+                            
                     elif len(face_locations) == 0:
                         self.status_signal.emit("No face detected! Try again.")
                     else:
@@ -80,37 +83,37 @@ class EncodingWorker(QThread):
     def run(self):
         try:
             security = SecurityManager(self.password)
-            dataset_dir = "dataset"
-            
-            if not os.path.exists(dataset_dir):
-                self.log_signal.emit("Error: Dataset directory not found!")
-                self.finished_signal.emit()
-                return
+            db = DatabaseManager()
+            students = db.get_all_students()
 
-            students = os.listdir(dataset_dir)
             if not students:
-                self.log_signal.emit("Error: Dataset is empty!")
+                self.log_signal.emit("Error: No students registered in the database!")
                 self.finished_signal.emit()
                 return
 
             for student_name in students:
-                student_path = os.path.join(dataset_dir, student_name)
-                if not os.path.isdir(student_path): continue
-                
                 self.log_signal.emit(f"Processing student: {student_name}")
                 all_encodings = []
+                images_data = db.load_student_images(student_name)
                 
-                for img_name in os.listdir(student_path):
-                    img_path = os.path.join(student_path, img_name)
+                if not images_data:
+                    self.log_signal.emit(f"No images found for {student_name}")
+                    continue
+
+                for i, img_bytes in enumerate(images_data):
                     try:
-                        image = face_recognition.load_image_file(img_path)
-                        encodings = face_recognition.face_encodings(image)
+                        nparr = np.frombuffer(img_bytes, np.uint8)
+                        image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+                        # face_recognition expects RGB
+                        rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                        
+                        encodings = face_recognition.face_encodings(rgb_image)
                         if len(encodings) > 0:
                             all_encodings.append(encodings[0])
                         else:
-                            self.log_signal.emit(f"No face found in {img_name}")
+                            self.log_signal.emit(f"No face found in image {i + 1} for {student_name}")
                     except Exception as e:
-                        self.log_signal.emit(f"Error processing {img_name}: {e}")
+                        self.log_signal.emit(f"Error processing image {i + 1}: {e}")
                 
                 if all_encodings:
                     encoded_data = pickle.dumps(all_encodings)
