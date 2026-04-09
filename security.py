@@ -65,5 +65,6 @@ class SecurityManager:
         decrypted_data = decryptor.update(encrypted_data) + decryptor.finalize()
         
         return decrypted_data
+        
 
     
