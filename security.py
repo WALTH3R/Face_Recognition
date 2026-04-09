@@ -5,7 +5,7 @@ from pathlib import Path
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+import atexit
 
 logger = logging.getLogger(__name__)
 
@@ -30,8 +30,10 @@ class SecurityManager:
         self.encodings_dir = Path(encodings_dir)
         self.key = self._derive_key()
         
-        import atexit
         atexit.register(self._cleanup)
+
+    def __del__(self):
+        self._cleanup()
 
     def _cleanup(self):
         if hasattr(self, 'password') and self.password:
